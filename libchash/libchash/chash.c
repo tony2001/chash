@@ -222,6 +222,7 @@ int chash_add_target(CHASH_CONTEXT *context, const char *target, u_char weight)
             return CHASH_ERROR_MEMORY;
         }
         context->targets[context->targets_count].weight = weight;
+        context->targets[context->targets_count].index = context->targets_count;
         context->targets_count ++;
     }
     return CHASH_ERROR_DONE;
@@ -435,7 +436,7 @@ int chash_file_unserialize(CHASH_CONTEXT *context, const char *path)
 #include "sort.h"
 
 // Perform a lookup (implicit freeze)
-int chash_lookup(CHASH_CONTEXT *context, const char *candidate, u_int16_t count, char ***output)
+int chash_lookup_index(CHASH_CONTEXT *context, const char *candidate, u_int16_t count, char ***output, u_int16_t **output_index)
 {
     u_int32_t hash, start = 0, range;
     u_int16_t rank = 1, index;
@@ -449,17 +450,25 @@ int chash_lookup(CHASH_CONTEXT *context, const char *candidate, u_int16_t count,
     {
         return status;
     }
-    if (context->lookups_allocated < context->targets_count && !(context->lookups = (CHASH_LOOKUP *)realloc(context->lookups, context->targets_count * sizeof(CHASH_LOOKUP))))
+    if (context->lookups_allocated < context->targets_count)
     {
-        return CHASH_ERROR_MEMORY;
+        if (!(context->lookups = (CHASH_LOOKUP *)realloc(context->lookups, context->targets_count * sizeof(CHASH_LOOKUP))))
+        {
+            return CHASH_ERROR_MEMORY;
+        }
+        if (!(context->lookup = (char **)realloc(context->lookup, context->targets_count * sizeof(char *))))
+        {
+            return CHASH_ERROR_MEMORY;
+        }
+        if (!(context->lookup_index = (u_int16_t *)realloc(context->lookup_index, context->targets_count * sizeof(u_int16_t))))
+        {
+            return CHASH_ERROR_MEMORY;
+        }
+        context->lookups_allocated = context->targets_count;
     }
-    if (context->lookups_allocated < context->targets_count && !(context->lookup = (char **)realloc(context->lookup, context->targets_count * sizeof(char *))))
-    {
-        return CHASH_ERROR_MEMORY;
-    }
-    context->lookups_allocated = context->targets_count;
     memset(context->lookups, 0, context->targets_count * sizeof(CHASH_LOOKUP));
     memset(context->lookup, 0, context->targets_count * sizeof(char *));
+    memset(context->lookup_index, 0, context->targets_count * sizeof(u_int16_t));
     hash = chash_mmhash2(candidate, -1);
     if (hash > context->continuum[0].hash && hash <= context->continuum[context->items_count - 1].hash)
     {
@@ -491,12 +500,21 @@ int chash_lookup(CHASH_CONTEXT *context, const char *candidate, u_int16_t count,
     for (index = context->targets_count - count; index < context->targets_count; index ++)
     {
         context->lookup[index - (context->targets_count - count)] = context->targets[context->lookups[index].target].name;
+        context->lookup_index[index - (context->targets_count - count)] = context->targets[context->lookups[index].target].index;
     }
     if (output)
     {
         *output = context->lookup;
     }
+    if (output_index) {
+        *output_index = context->lookup_index;
+    }
     return count;
+}
+
+int chash_lookup(CHASH_CONTEXT *context, const char *candidate, u_int16_t count, char ***output)
+{
+    return chash_lookup_index(context, candidate, count, output, NULL);
 }
 
 // Perform a lookup and randomly balance among results

@@ -304,6 +304,25 @@ Perform a lookup in the given context, returning *count* distincts targets.
 * *CHASH_ERROR_NOT_FOUND*: no target exist in the given context (use *chash_add_target()* first)
 * *CHASH_ERROR_MEMORY*: a memory allocation error occurred
 
+### int chash_lookup_index(CHASH_CONTEXT \*context, const char \*name, u_int16_t count, char \*\*\*output, u_int16_t \*\*output_index)
+
+#### Description
+Perform a lookup in the given context, returning *count* distincts targets.
+
+#### Parameters
+* *context*: pointer to an initialized context
+* *name*: NULL-terminated candidate name
+* *count*: desired targets count
+* *output*: matching targets list (read-only array, *MUST* not be modified by calling code)
+* *output_index*: matching targets *indexes* list (read-only array, *MUST* not be modified by calling code)
+
+#### Return value
+* *n*: when successful, count of returned matching targets
+* *CHASH_ERROR_INVALID_PARAMETER*: an invalid parameter was passed to the function
+* *CHASH_ERROR_NOT_INITIALIZED*: the context was not initialized (use *chash_initialize()* first)
+* *CHASH_ERROR_NOT_FOUND*: no target exist in the given context (use *chash_add_target()* first)
+* *CHASH_ERROR_MEMORY*: a memory allocation error occurred
+
 ### int chash_lookup_balance(CHASH_CONTEXT \*context, const char \*name, u_int16_t count, char \*\*output)
 
 #### Description

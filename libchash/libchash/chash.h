@@ -22,6 +22,7 @@ typedef struct
 {
     u_char       weight;
     char         *name;
+    u_int16_t    index;
 } CHASH_TARGET;
 typedef struct
 {
@@ -44,6 +45,7 @@ typedef struct
     CHASH_LOOKUP *lookups;
     u_int16_t    lookups_allocated;
     char         **lookup;
+    u_int16_t    *lookup_index;
 } CHASH_CONTEXT;
 
 #pragma pack(pop)
@@ -60,6 +62,7 @@ int chash_unserialize(CHASH_CONTEXT *, const u_char *, u_int32_t);
 int chash_file_serialize(CHASH_CONTEXT *, const char *);
 int chash_file_unserialize(CHASH_CONTEXT *, const char *);
 int chash_lookup(CHASH_CONTEXT *, const char *, u_int16_t, char ***);
+int chash_lookup_index(CHASH_CONTEXT *, const char *, u_int16_t, char ***, u_int16_t **);
 int chash_lookup_balance(CHASH_CONTEXT *, const char *, u_int16_t, char **);
 
 #endif
