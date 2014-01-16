@@ -244,6 +244,7 @@ int chash_remove_target(CHASH_CONTEXT *context, const char *target)
     }
     if (context->targets)
     {
+        int found = 0;
         for (index = 0; index < context->targets_count; index ++)
         {
             if (! strcmp(target, context->targets[index].name))
@@ -251,8 +252,19 @@ int chash_remove_target(CHASH_CONTEXT *context, const char *target)
                 memmove(&(context->targets[index]), &(context->targets[index + 1]),
                         sizeof(CHASH_TARGET) * (context->targets_count - index - 1));
                 context->targets_count --;
-                return CHASH_ERROR_DONE;
+                found = 1;
+                index --;
             }
+        }
+        if (found)
+        {
+            for (; index < context->targets_count; index ++)
+            {
+                /* update index for entries following the deleted one */
+                context->targets[index].index --;
+                continue;
+            }
+            return CHASH_ERROR_DONE;
         }
     }
     return CHASH_ERROR_NOT_FOUND;
